@@ -337,6 +337,11 @@
         <input type="checkbox" id="randomize">
         <span>メッセージのランダマイズ</span>
       </label>
+
+      <label class="checkbox-container">
+        <input type="checkbox" id="commandSpam">
+        <span>コマンド荒らし</span>
+      </label>
       <div class="row">
         <label>メッセージ送信間隔
           <input type="number" id="delay" min="0" step="0.1" placeholder="0"> 秒
@@ -353,7 +358,11 @@
             <textarea id="mentionIds" rows="2" placeholder="カンマ / 改行 / スペースで区切る 123456789012345678,123456789012345678"></textarea>
           </label>
           <button type="button" id="fetchMentions" class="secondary">メンション自動取得</button>
-        </div>
+          
+          <label style="margin-top: 10px;">ランダムメンションする人数
+            <input type="number" id="mentionCount" min="1" step="1" placeholder="1" value="1"> 人
+          </label>
+          </div>
       </details>
 
       <details>
@@ -378,6 +387,86 @@
 
     <div id="log"></div>
   </div>
+  <script>
+  document.querySelectorAll('details').forEach((det)=>{
+	const sum = det.querySelector('summary');
+	const content = det.querySelector('.detail-content');
+	if(!sum || !content) return;
+
+	const T = 'max-height .3s ease, opacity .25s ease, transform .3s ease';
+
+	function openAnim(){
+		content.style.transition = 'none';
+		content.style.willChange = 'max-height, opacity, transform';
+		content.style.maxHeight = '0px';
+		content.style.opacity   = '0';
+		content.style.transform = 'translateY(-10px)';
+
+		content.offsetHeight;
+		requestAnimationFrame(()=>{
+			content.style.transition = T;
+
+			const h = content.scrollHeight;
+			content.style.maxHeight = h + 'px';
+			content.style.opacity   = '1';
+			content.style.transform = 'translateY(0)';
+
+			const onEnd = (e)=>{
+				if(e.propertyName !== 'max-height') return;
+				content.style.maxHeight = 'none';
+				content.style.willChange = '';
+				content.removeEventListener('transitionend', onEnd);
+			};
+			content.addEventListener('transitionend', onEnd);
+		});
+	}
+
+	function closeAnim(){
+		const h = content.scrollHeight;
+		content.style.transition = 'none';
+		content.style.willChange = 'max-height, opacity, transform';
+		content.style.maxHeight = h + 'px';
+		content.style.opacity   = '1';
+		content.style.transform = 'translateY(0)';
+		content.offsetHeight;
+
+		requestAnimationFrame(()=>{
+			content.style.transition = T;
+			content.style.maxHeight = '0px';
+			content.style.opacity   = '0';
+			content.style.transform = 'translateY(-10px)';
+
+			const onEnd = (e)=>{
+				if(e.propertyName !== 'max-height') return;
+				det.open = false;
+				content.style.willChange = '';
+				content.removeEventListener('transitionend', onEnd);
+			};
+			content.addEventListener('transitionend', onEnd);
+		});
+	}
+
+	det.addEventListener('toggle', () => {
+		if(det.open){
+			openAnim();
+		}
+	});
+
+	sum.addEventListener('click', (ev) => {
+		if(!det.open) return;
+		ev.preventDefault();
+		closeAnim();
+	});
+
+	const mo = new MutationObserver(()=>{
+		if(det.open && content.style.maxHeight !== 'none'){
+			content.style.maxHeight = content.scrollHeight + 'px';
+		}
+	});
+	mo.observe(content, {subtree:true, childList:true});
+});
+
+  </script>
 
   <script src="script.js"></script>
 </body>
